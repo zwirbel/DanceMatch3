@@ -43,7 +43,7 @@
         <input id="file" type="file" accept="audio/*,.mp4,.webm" aria-label="Audiodatei wählen">
         <button id="tap" class="secondary" type="button"><span aria-hidden="true">👆</span> Tempo tippen</button>
       </div>
-      <p class="fineprint">Die Musik wird direkt auf deinem Gerät analysiert und nicht hochgeladen. Kein Konto und kein Analyse-Server nötig.</p>
+      <p id="privacyText" class="fineprint">Die Musik wird direkt auf deinem Gerät analysiert und nicht hochgeladen. Kein Konto und kein Analyse-Server nötig.</p>
       <section id="result" class="result" aria-live="polite" hidden>
         <div class="result-kicker">UNSERE TANZEMPFEHLUNG</div>
         <h2 id="dance" class="dance"></h2>
@@ -61,7 +61,7 @@
         <summary>Wie entsteht die Empfehlung?</summary>
         <p>DanceMatch misst wiederkehrende Rhythmusimpulse, schätzt daraus das Tempo und vergleicht mögliche Akzentmuster für 3/4 und 4/4. Daraus entstehen Tanzvorschläge. Das ist eine lokale Signal- und Tempoanalyse, kein trainiertes Modell, das den Musikstil sicher erkennt.</p>
         <p>Kurze Ausschnitte können als halbes oder doppeltes Tempo erkannt werden. Bei Walzer und anderen Tänzen solltest du auch hören, ob sich der Grundschritt natürlich anfühlt.</p>
-        <p class="privacy">Mikrofonaufnahme und Audiodatei bleiben auf deinem Gerät. DanceMatch lädt keine Musik hoch.</p>
+        <p id="privacyNote" class="privacy">Mikrofonaufnahme und Audiodatei bleiben auf deinem Gerät. DanceMatch lädt keine Musik hoch.</p>
       </details>
     </main>
   </div>
@@ -71,6 +71,7 @@
     const $=id=>document.getElementById(id),button=$('record'),file=$('file'),duration=18;
     const API=(window.DANCEMATCH_API_URL||'').replace(/\/$/,'');
     let recorder=null,stream=null,chunks=[],tick=null,elapsed=0,taps=[],busy=false;
+    if(API){$('privacyText').textContent='Der Ausschnitt wird per HTTPS zur Analyse an den DanceMatch-Server gesendet und danach gelöscht.';$('privacyNote').textContent='Aufnahmen werden nur für die Analyse übertragen und serverseitig temporär verarbeitet. Die Audiodatei wird danach gelöscht.'}
     function status(message){$('status').textContent=message}
     function progress(n){const pct=Math.max(0,Math.min(100,n/duration*100));$('bar').style.width=pct+'%';document.querySelector('[role=progressbar]').setAttribute('aria-valuenow',String(Math.min(duration,n)))}
     function toast(message){const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
