@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: dancematch-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://snazzy-unicorn-0b9f44.netlify.app
