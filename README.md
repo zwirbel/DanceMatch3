@@ -58,4 +58,5 @@ From `server/`, run `python test_analysis.py /path/to/test-audio.mp4`. This chec
 - A few seconds of music may not contain enough information to decide meter reliably; the API reports `Unklar` instead of claiming certainty.
 - Half/double-time ambiguity is common in pop and dance music. The API returns alternatives and confidence.
 - Matching is based on tempo and rhythmic accent estimates. Reliable distinction among Discofox, Rumba, Cha-Cha-Cha, Jive, and the waltzes would require labeled training data and evaluation across diverse music.
+- Bachata is now included as a possible alternative from 108 to 152 BPM, but the app does not claim to recognize its guitar/percussion pattern; tempo overlap with Cha-Cha-Cha and other 4/4 music is substantial.
 - There is no user account, rate limiting, abuse monitoring, or production SLA in this low-cost prototype.
