@@ -9,6 +9,7 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <title>DanceMatch 3.0</title>
   <script src="./config.js"></script>
+  <script src="./analyzer.js"></script>
   <style>
     :root{color-scheme:dark;--bg:#10131e;--panel:#1b2030;--panel2:#151a28;--ink:#f7f6f2;--muted:#aeb7ca;--yellow:#f4c84a;--line:#343c50;--green:#91deb0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
     *{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% -15%,#303448 0,#10131e 54%);color:var(--ink);padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:flex-start}
@@ -42,7 +43,7 @@
         <input id="file" type="file" accept="audio/*,.mp4,.webm" aria-label="Audiodatei wählen">
         <button id="tap" class="secondary" type="button"><span aria-hidden="true">👆</span> Tempo tippen</button>
       </div>
-      <p class="fineprint">Der Ausschnitt wird per HTTPS zur Analyse an den DanceMatch-Server gesendet und danach gelöscht. Kein Konto nötig.</p>
+      <p class="fineprint">Die Musik wird direkt auf deinem Gerät analysiert und nicht hochgeladen. Kein Konto und kein Analyse-Server nötig.</p>
       <section id="result" class="result" aria-live="polite" hidden>
         <div class="result-kicker">UNSERE TANZEMPFEHLUNG</div>
         <h2 id="dance" class="dance"></h2>
@@ -58,9 +59,9 @@
       </section>
       <details>
         <summary>Wie entsteht die Empfehlung?</summary>
-        <p>DanceMatch misst wiederkehrende Rhythmusimpulse, schätzt daraus das Tempo und vergleicht mögliche Akzentmuster für 3/4 und 4/4. Daraus entstehen Tanzvorschläge. Das ist eine Signal- und Tempoanalyse, kein trainiertes Modell, das den Musikstil sicher erkennt.</p>
+        <p>DanceMatch misst wiederkehrende Rhythmusimpulse, schätzt daraus das Tempo und vergleicht mögliche Akzentmuster für 3/4 und 4/4. Daraus entstehen Tanzvorschläge. Das ist eine lokale Signal- und Tempoanalyse, kein trainiertes Modell, das den Musikstil sicher erkennt.</p>
         <p>Kurze Ausschnitte können als halbes oder doppeltes Tempo erkannt werden. Bei Walzer und anderen Tänzen solltest du auch hören, ob sich der Grundschritt natürlich anfühlt.</p>
-        <p class="privacy">Aufnahmen werden nur für die Analyse übertragen und auf dem Server temporär verarbeitet. Wähle alternativ eine Audiodatei oder tippe das Tempo selbst.</p>
+        <p class="privacy">Mikrofonaufnahme und Audiodatei bleiben auf deinem Gerät. DanceMatch lädt keine Musik hoch.</p>
       </details>
     </main>
   </div>
@@ -86,22 +87,27 @@
       $('result').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'nearest'});
     }
     async function sendAudio(blob,name='aufnahme.webm'){
-      if(!API){status('Analyse-Server ist noch nicht verbunden.');toast('Serveradresse fehlt in config.js');return}
-      const form=new FormData();form.append('audio',blob,name);
-      setBusy(true);status('Analysiere Tempo und Takt …');
+      setBusy(true);status(API?'Analysiere Tempo und Takt …':'Analysiere Musik sicher auf deinem Gerät …');progress(3);
       try{
-        const response=await fetch(API+'/analyze',{method:'POST',body:form,headers:{'Accept':'application/json'}});
-        let data={};try{data=await response.json()}catch{}
-        if(!response.ok)throw new Error(data.detail||'Analyse fehlgeschlagen ('+response.status+').');
-        showResult(data);
+        let data,source;
+        if(API){
+          const form=new FormData();form.append('audio',blob,name);
+          const response=await fetch(API+'/analyze',{method:'POST',body:form,headers:{'Accept':'application/json'}});
+          try{data=await response.json()}catch{}
+          if(!response.ok)throw new Error(data.detail||'Analyse fehlgeschlagen ('+response.status+').');
+          source='Serveranalyse';
+        }else{
+          data=await window.DanceMatchAnalyzer.analyzeBlob(blob);
+          source='Lokale Analyse';
+        }
+        showResult(data,source);
         status('Analyse abgeschlossen.');progress(duration);
-      }catch(e){status(e.message||'Server nicht erreichbar. Bitte Verbindung prüfen.');toast('Keine Verbindung zum Analyse-Server.')}
+      }catch(e){status(e.message||'Analyse fehlgeschlagen. Bitte einen anderen Ausschnitt versuchen.');toast('Audioanalyse fehlgeschlagen.')}
       finally{setBusy(false)}
     }
     function stopRecording(){if(recorder&&recorder.state==='recording')recorder.stop()}
     button.addEventListener('click',async()=>{
       if(recorder&&recorder.state==='recording'){stopRecording();return}
-      if(!API){status('Analyse-Server ist noch nicht verbunden.');toast('Die Veröffentlichung benötigt noch die Serveradresse.');return}
       if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){status('Dieser Browser unterstützt keine Audioaufnahme. Bitte Audiodatei wählen.');return}
       try{
         stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
