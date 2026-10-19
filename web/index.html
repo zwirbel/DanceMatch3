@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10131e">
+  <meta name="description" content="Nimm einen kurzen Musikausschnitt auf und finde einen passenden Gesellschaftstanz.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>DanceMatch 3.0</title>
+  <script src="./config.js"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#10131e;--panel:#1b2030;--panel2:#151a28;--ink:#f7f6f2;--muted:#aeb7ca;--yellow:#f4c84a;--line:#343c50;--green:#91deb0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% -15%,#303448 0,#10131e 54%);color:var(--ink);padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:flex-start}
+    button,input{font:inherit}.shell{width:min(100%,480px);margin:auto}.brand{display:flex;align-items:center;justify-content:center;gap:9px;color:var(--muted);font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin:5px 0 16px}.brand b{color:var(--yellow)}
+    main{background:linear-gradient(155deg,#202638,#191f2e 66%);border:1px solid var(--line);border-radius:28px;padding:24px 20px 20px;text-align:center;box-shadow:0 22px 65px #0005}h1{font-size:clamp(28px,8vw,38px);line-height:1.04;margin:0;letter-spacing:-.035em} .sub{color:var(--muted);margin:10px 0 0;font-size:15px;line-height:1.45}
+    .record-zone{display:grid;place-items:center;margin:23px 0 12px}.record{height:140px;width:140px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--yellow);color:#171b24;box-shadow:0 0 0 10px #f4c84a18,0 12px 30px #0004;cursor:pointer;transition:transform .15s,box-shadow .2s;touch-action:manipulation}.record:active{transform:scale(.96)}.record:focus-visible,.secondary:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset:4px}.record[aria-pressed=true]{background:#ff7b76;box-shadow:0 0 0 10px #ff7b7622,0 12px 30px #0004}.mic-icon{font-size:43px;line-height:1}.record-label{font-size:13px;font-weight:750;letter-spacing:.04em;margin-top:6px}.record[disabled]{opacity:.55;cursor:wait}
+    .status{min-height:26px;color:var(--ink);font-size:14px;font-weight:600;margin:15px 0 8px}.meter{height:7px;border-radius:10px;background:#333c50;overflow:hidden}.bar{height:100%;width:0;background:linear-gradient(90deg,#f0a93f,var(--yellow));border-radius:inherit;transition:width .22s linear}.hint{font-size:12px;color:var(--muted);margin:10px 0 18px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.secondary{min-height:48px;border-radius:14px;border:1px solid #47516a;background:#2a3247;color:var(--ink);font-size:14px;font-weight:650;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:10px}.secondary:active{background:#364158}#file{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden}.fineprint{font-size:11px;line-height:1.45;color:#8995ac;margin:14px 2px 0}
+    .result{margin-top:19px;padding:17px;border-radius:18px;background:var(--panel2);border:1px solid #363f53;text-align:left}.result[hidden]{display:none}.result-kicker{font-size:11px;letter-spacing:.12em;color:var(--green);font-weight:750}.dance{font-size:30px;line-height:1.1;color:var(--yellow);margin:7px 0 12px;letter-spacing:-.025em}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{border-radius:12px;background:#20283a;padding:10px 11px}.stat span{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}.stat strong{font-size:15px}.alternatives{font-size:13px;color:var(--ink);line-height:1.5;margin:12px 0 4px}.tip{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0 0}.note{font-size:11px;color:#8995ac;line-height:1.45;margin:12px 0 0}
+    details{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;text-align:left;color:var(--muted)}summary{cursor:pointer;color:var(--ink);font-size:13px;font-weight:650}details p{font-size:12px;line-height:1.55;margin:10px 0 0}.privacy{color:var(--green)}.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;background:#252e40;border:1px solid #56617a;border-radius:14px;padding:12px 16px;max-width:calc(100vw - 32px);font-size:13px;transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:360px){main{padding:21px 15px 17px}.record{height:126px;width:126px}.secondary{font-size:12px;padding:9px 5px}.dance{font-size:26px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="brand"><span aria-hidden="true">♫</span><b>Dance</b>Match <span>3.0</span></div>
+    <main>
+      <h1>Welcher Tanz passt?</h1>
+      <p class="sub">Spiele Musik ab – wir hören 18 Sekunden mit und schlagen einen Gesellschaftstanz vor.</p>
+      <div class="record-zone">
+        <button id="record" class="record" type="button" aria-label="Musikaufnahme starten" aria-pressed="false">
+          <span><span class="mic-icon" aria-hidden="true">🎙</span><br><span id="recordLabel" class="record-label">AUFNEHMEN</span></span>
+        </button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">Bereit für deine Musik.</div>
+      <div class="meter" role="progressbar" aria-label="Aufnahmefortschritt" aria-valuemin="0" aria-valuemax="18" aria-valuenow="0"><div id="bar" class="bar"></div></div>
+      <p id="hint" class="hint">Halte dein Telefon nahe an die Musik. Du kannst jederzeit stoppen.</p>
+      <div class="actions">
+        <label class="secondary" for="file"><span aria-hidden="true">♫</span> Audiodatei wählen</label>
+        <input id="file" type="file" accept="audio/*,.mp4,.webm" aria-label="Audiodatei wählen">
+        <button id="tap" class="secondary" type="button"><span aria-hidden="true">👆</span> Tempo tippen</button>
+      </div>
+      <p class="fineprint">Der Ausschnitt wird per HTTPS zur Analyse an den DanceMatch-Server gesendet und danach gelöscht. Kein Konto nötig.</p>
+      <section id="result" class="result" aria-live="polite" hidden>
+        <div class="result-kicker">UNSERE TANZEMPFEHLUNG</div>
+        <h2 id="dance" class="dance"></h2>
+        <div class="stats">
+          <div class="stat"><span>Tempo</span><strong id="tempo"></strong></div>
+          <div class="stat"><span>Taktgefühl</span><strong id="meter"></strong></div>
+          <div class="stat"><span>Sicherheit</span><strong id="confidence"></strong></div>
+          <div class="stat"><span>Ausschnitt</span><strong id="duration"></strong></div>
+        </div>
+        <p id="alternatives" class="alternatives"></p>
+        <p id="tip" class="tip"></p>
+        <p id="note" class="note"></p>
+      </section>
+      <details>
+        <summary>Wie entsteht die Empfehlung?</summary>
+        <p>DanceMatch misst wiederkehrende Rhythmusimpulse, schätzt daraus das Tempo und vergleicht mögliche Akzentmuster für 3/4 und 4/4. Daraus entstehen Tanzvorschläge. Das ist eine Signal- und Tempoanalyse, kein trainiertes Modell, das den Musikstil sicher erkennt.</p>
+        <p>Kurze Ausschnitte können als halbes oder doppeltes Tempo erkannt werden. Bei Walzer und anderen Tänzen solltest du auch hören, ob sich der Grundschritt natürlich anfühlt.</p>
+        <p class="privacy">Aufnahmen werden nur für die Analyse übertragen und auf dem Server temporär verarbeitet. Wähle alternativ eine Audiodatei oder tippe das Tempo selbst.</p>
+      </details>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+  (()=>{
+    const $=id=>document.getElementById(id),button=$('record'),file=$('file'),duration=18;
+    const API=(window.DANCEMATCH_API_URL||'').replace(/\/$/,'');
+    let recorder=null,stream=null,chunks=[],tick=null,elapsed=0,taps=[],busy=false;
+    function status(message){$('status').textContent=message}
+    function progress(n){const pct=Math.max(0,Math.min(100,n/duration*100));$('bar').style.width=pct+'%';document.querySelector('[role=progressbar]').setAttribute('aria-valuenow',String(Math.min(duration,n)))}
+    function toast(message){const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+    function setBusy(value){busy=value;button.disabled=value;file.disabled=value;$('tap').disabled=value}
+    function showResult(d,source='Serveranalyse'){
+      $('dance').textContent=d.dance||'Tanz nicht sicher erkannt';
+      $('tempo').textContent=Number.isFinite(Number(d.bpm))?'ca. '+Math.round(Number(d.bpm))+' BPM':'–';
+      $('meter').textContent=d.meter||'unklar';$('confidence').textContent=d.confidence||'manuell';
+      $('duration').textContent=d.duration_seconds?d.duration_seconds+' Sek.':'manuell';
+      const dances=d.dance_alternatives||[];
+      const tempos=d.tempo_alternatives||[];
+      $('alternatives').textContent=(dances.length?'Auch möglich: '+dances.join(' · '):'')+(tempos.length?' · Halb-/Doppelzeit: '+tempos.join(' / ')+' BPM':'');
+      $('tip').textContent=d.tip||'';$('note').textContent=(d.note||'')+' · '+source;
+      $('result').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    async function sendAudio(blob,name='aufnahme.webm'){
+      if(!API){status('Analyse-Server ist noch nicht verbunden.');toast('Serveradresse fehlt in config.js');return}
+      const form=new FormData();form.append('audio',blob,name);
+      setBusy(true);status('Analysiere Tempo und Takt …');
+      try{
+        const response=await fetch(API+'/analyze',{method:'POST',body:form,headers:{'Accept':'application/json'}});
+        let data={};try{data=await response.json()}catch{}
+        if(!response.ok)throw new Error(data.detail||'Analyse fehlgeschlagen ('+response.status+').');
+        showResult(data);
+        status('Analyse abgeschlossen.');progress(duration);
+      }catch(e){status(e.message||'Server nicht erreichbar. Bitte Verbindung prüfen.');toast('Keine Verbindung zum Analyse-Server.')}
+      finally{setBusy(false)}
+    }
+    function stopRecording(){if(recorder&&recorder.state==='recording')recorder.stop()}
+    button.addEventListener('click',async()=>{
+      if(recorder&&recorder.state==='recording'){stopRecording();return}
+      if(!API){status('Analyse-Server ist noch nicht verbunden.');toast('Die Veröffentlichung benötigt noch die Serveradresse.');return}
+      if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){status('Dieser Browser unterstützt keine Audioaufnahme. Bitte Audiodatei wählen.');return}
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+        const mime=['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+        recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);chunks=[];elapsed=0;progress(0);$('result').hidden=true;
+        recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+        recorder.onerror=()=>{status('Aufnahme fehlgeschlagen. Bitte noch einmal versuchen.');stream?.getTracks().forEach(t=>t.stop())};
+        recorder.onstop=async()=>{clearInterval(tick);stream?.getTracks().forEach(t=>t.stop());stream=null;button.setAttribute('aria-pressed','false');button.setAttribute('aria-label','Musikaufnahme starten');$('recordLabel').textContent='AUFNEHMEN';button.querySelector('.mic-icon').textContent='🎙';const type=recorder.mimeType||'audio/webm';await sendAudio(new Blob(chunks,{type}),type.includes('mp4')?'aufnahme.m4a':'aufnahme.webm')};
+        recorder.start(500);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label','Aufnahme stoppen');$('recordLabel').textContent='STOPPEN';button.querySelector('.mic-icon').textContent='■';status('Aufnahme läuft · 0 von 18 Sekunden');
+        tick=setInterval(()=>{elapsed++;progress(elapsed);status('Aufnahme läuft · '+elapsed+' von 18 Sekunden');if(elapsed>=duration)stopRecording()},1000);
+      }catch(e){if(e.name==='NotAllowedError')status('Mikrofonzugriff abgelehnt. Bitte in den Browser-Einstellungen erlauben.');else status('Mikrofon nicht verfügbar. Bitte Audiodatei wählen.');stream?.getTracks().forEach(t=>t.stop())}
+    });
+    file.addEventListener('change',async()=>{const f=file.files?.[0];if(!f)return;if(f.size>25*1024*1024){status('Datei zu gross. Maximal 25 MB.');file.value='';return}if(!f.type.startsWith('audio/')&&!/\.(mp4|webm)$/i.test(f.name)){status('Bitte eine Audiodatei wählen.');return}$('result').hidden=true;await sendAudio(f,f.name)});
+    $('tap').addEventListener('click',()=>{const now=performance.now();taps=taps.filter(t=>now-t<7000);taps.push(now);if(taps.length>=5){const sorted=taps.slice(1).map((t,i)=>t-taps[i]).sort((a,b)=>a-b);const bpm=Math.round(60000/sorted[Math.floor(sorted.length/2)]);const dance=bpm<94?'Rumba / langsamer Discofox':bpm<112?'Discofox / Rumba':bpm<128?'Cha-Cha-Cha / Discofox':bpm<150?'Discofox':bpm<178?'Jive / Discofox':'Quickstep / Jive';showResult({bpm,dance,dance_alternatives:['Taktgefühl selbst prüfen'],meter:'nicht bestimmt',confidence:'manuell',tip:'Manuelle Tempo-Schätzung durch gleichmässiges Tippen.'},'Tempo durch Tippen');status('Tempo geschätzt · '+bpm+' BPM');taps=[]}else status('Tippe gleichmässig im Takt · '+taps.length+' von 5')});
+    if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  })();
+  </script>
+</body>
+</html>
