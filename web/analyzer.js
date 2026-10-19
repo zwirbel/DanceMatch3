@@ -148,13 +148,15 @@
 
   function recommend(bpm, meter) {
     const triple = meter.startsWith('3/4');
+    const bachata = bpm >= 108 && bpm <= 152 ? ['Bachata (bei passendem Latin-Rhythmus)'] : [];
     if (triple) return bpm >= 145
       ? ['Wiener Walzer', ['Discofox (Halftime prüfen)', 'Langsamer Walzer'], 'Dreiertakt wahrscheinlich; höre auf den Walzerschritt 1–2–3.']
       : ['Langsamer Walzer', ['Rumba', 'Discofox'], 'Dreiertakt wahrscheinlich; der Walzerrhythmus sollte sich klar anfühlen.'];
     if (bpm < 94) return ['Rumba', ['Langsamer Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges Tempo; falls jeder zweite Puls passt, kann es Discofox in Halftime sein.'];
-    if (bpm < 112) return ['Discofox', ['Rumba', 'Bachata (bei passendem Rhythmus)'], 'Mittleres Tempo; die Betonung entscheidet zwischen Discofox und Rumba.'];
-    if (bpm < 128) return ['Cha-Cha-Cha', ['Discofox', 'Salsa (bei passendem Rhythmus)'], 'Tempo passt zu Cha-Cha-Cha; den typischen Cha-Cha-Grundschritt gegenhören.'];
-    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', 'Jive (Halftime prüfen)'], 'Flottes Tempo; Discofox ist die robusteste Empfehlung für Popmusik.'];
+    if (bpm < 112) return ['Discofox', ['Rumba', ...bachata], 'Mittleres Tempo; die Betonung entscheidet zwischen Discofox, Rumba und Bachata.'];
+    if (bpm < 128) return ['Cha-Cha-Cha', ['Discofox', ...bachata], 'Tempo passt zu Cha-Cha-Cha; Bachata ist bei passendem Latin-Gitarren- und Perkussionsrhythmus ebenfalls möglich.'];
+    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', ...bachata, 'Jive (Halftime prüfen)'], 'Flottes Tempo; Bachata bleibt möglich, wenn der charakteristische Latin-Rhythmus passt.'];
+    if (bpm < 153) return ['Discofox', ['Cha-Cha-Cha', ...bachata], 'Am oberen Bachata-Tempo; bitte Rhythmus und Tanzgefühl gegenhören.'];
     if (bpm < 178) return ['Jive', ['Discofox (Halftime prüfen)', 'Cha-Cha-Cha'], 'Schnelles Tempo; achte auf den federnden Jive-Rhythmus.'];
     return ['Quickstep', ['Jive (Halftime prüfen)', 'Wiener Walzer (nur bei 3/4)'], 'Sehr schnelles Tempo; Quickstep nur wählen, wenn der 4/4-Galopp passt.'];
   }
@@ -181,7 +183,7 @@
       confidence_score: Math.round(confidenceScore * 100) / 100,
       beat_consistency: 0,
       tip: dance[2],
-      note: 'Lokale Tempo- und Akzentanalyse, kein trainierter Tanzstil-Klassifikator. Bei Unsicherheit Halb-/Doppelzeit und Taktgefühl gegenhören.',
+      note: 'Lokale Tempo- und Akzentanalyse, kein trainierter Tanzstil-Klassifikator. Bachata und Cha-Cha können sich im Tempo überschneiden; Instrumente und Musikstil sind hier nicht zuverlässig klassifiziert.',
       duration_seconds: Math.round(duration * 10) / 10
     };
   }
