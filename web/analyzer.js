@@ -106,7 +106,7 @@
       const lag = 60 * frameRate / bpm;
       if (lag < 1 || lag >= x.length / 2) continue;
       const score = 0.7 * correlation(x, lag) + 0.2 * correlation(x, 2 * lag) + 0.1 * correlation(x, Math.max(1, Math.round(lag / 2)));
-      const prior = bpm < 70 ? -0.3 : bpm >= 150 && bpm <= 200 ? 0.18 : bpm >= 78 && bpm < 150 ? 0.05 : 0;
+      const prior = bpm < 78 ? -0.28 : bpm >= 195 && bpm <= 210 ? 0.32 : bpm >= 150 && bpm < 195 ? 0.18 : bpm >= 100 && bpm < 150 ? 0.12 : bpm >= 78 ? 0.02 : 0;
       out.push({ bpm, score: score + prior, periodicity: score });
     }
     return out.sort((a, b) => b.score - a.score);
@@ -150,15 +150,15 @@
     const triple = meter.startsWith('3/4');
     const bachata = bpm >= 108 && bpm <= 152 ? ['Bachata (bei passendem Latin-Rhythmus)'] : [];
     if (triple) return bpm >= 145
-      ? ['Wiener Walzer', ['Discofox (Halftime prüfen)', 'Langsamer Walzer'], 'Dreiertakt wahrscheinlich; höre auf den Walzerschritt 1–2–3.']
-      : ['Langsamer Walzer', ['Rumba', 'Discofox'], 'Dreiertakt wahrscheinlich; der Walzerrhythmus sollte sich klar anfühlen.'];
+      ? ['Wiener Walzer', ['Langsamer Walzer', 'Discofox (Halftime prüfen)'], 'Dreiertakt wahrscheinlich; bei diesem Tempo passt Wiener Walzer. Höre auf den Walzerschritt 1–2–3.']
+      : ['Langsamer Walzer', ['Wiener Walzer (nur bei höherem Tempo)', 'Rumba'], 'Dreiertakt wahrscheinlich; höre auf den Walzerschritt 1–2–3.'];
     if (bpm < 94) return ['Rumba', ['Langsamer Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges Tempo; falls jeder zweite Puls passt, kann es Discofox in Halftime sein.'];
-    if (bpm < 112) return ['Discofox', ['Rumba', ...bachata], 'Mittleres Tempo; die Betonung entscheidet zwischen Discofox, Rumba und Bachata.'];
-    if (bpm < 128) return ['Cha-Cha-Cha', ['Discofox', ...bachata], 'Tempo passt zu Cha-Cha-Cha; Bachata ist bei passendem Latin-Gitarren- und Perkussionsrhythmus ebenfalls möglich.'];
-    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', ...bachata, 'Jive (Halftime prüfen)'], 'Flottes Tempo; Bachata bleibt möglich, wenn der charakteristische Latin-Rhythmus passt.'];
-    if (bpm < 153) return ['Discofox', ['Cha-Cha-Cha', ...bachata], 'Am oberen Bachata-Tempo; bitte Rhythmus und Tanzgefühl gegenhören.'];
-    if (bpm < 178) return ['Jive', ['Discofox (Halftime prüfen)', 'Cha-Cha-Cha'], 'Schnelles Tempo; achte auf den federnden Jive-Rhythmus.'];
-    return ['Quickstep', ['Jive (Halftime prüfen)', 'Wiener Walzer (nur bei 3/4)'], 'Sehr schnelles Tempo; Quickstep nur wählen, wenn der 4/4-Galopp passt.'];
+    if (bpm < 105) return ['Rumba', ['Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges 4/4-Tempo passt zur Rumba; bei Unsicherheit auch Discofox gegenhören.'];
+    if (bpm < 118) return ['Discofox', ['Rumba', ...bachata], 'Mittleres Tempo; Rumba oder Bachata können bei passendem Musikrhythmus ebenfalls passen.'];
+    if (bpm < 132) return ['Cha-Cha-Cha', ['Discofox', ...bachata, 'Rumba (Halftime prüfen)'], 'Tempo passt zu Cha-Cha-Cha; Bachata ist bei passendem Latin-Gitarren- und Perkussionsrhythmus ebenfalls möglich.'];
+    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', ...bachata, 'Jive (Halftime prüfen)'], 'Flottes Tempo passt zu Discofox; Bachata bleibt bei charakteristischem Latin-Rhythmus möglich.'];
+    if (bpm < 190) return ['Jive', ['Discofox (Halftime prüfen)', 'Quickstep (nur bei sehr schnellem 4/4)'], 'Schnelles 4/4-Tempo passt zu Jive; achte auf den federnden Grundrhythmus.'];
+    return ['Quickstep', ['Jive (Halftime prüfen)', 'Discofox (Halftime prüfen)'], 'Sehr schnelles 4/4-Tempo passt zu Quickstep; höre auf den typischen Galopp.'];
   }
 
   function analyzePcm(samples, sampleRate) {
@@ -170,7 +170,9 @@
     const alternatives = [bpm / 2, bpm * 2, bpm < 70 ? bpm * 3 : bpm > 150 ? bpm / 3 : -1]
       .filter(x => x >= 55 && x <= 210).map(Math.round);
     const dance = recommend(bpm, meter.meter);
-    const confidenceScore = clamp(ranked[0].periodicity * 2.8, 0, 0.85);
+    const tempoConfidenceScore = clamp(ranked[0].periodicity * 2.8, 0, 0.85);
+    const overlappingDanceRange = !meter.meter.startsWith('3/4') && bpm >= 108 && bpm <= 152;
+    const confidenceScore = tempoConfidenceScore * (meter.meter === 'Unklar' ? 0.55 : 1) * (overlappingDanceRange ? 0.7 : 1);
     return {
       bpm: Math.round(bpm * 10) / 10,
       tempo_alternatives: alternatives,
