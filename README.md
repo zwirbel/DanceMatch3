@@ -49,7 +49,7 @@ Audio is written to a temporary file only while FFmpeg/librosa decode and analyz
 
 ## Validation
 
-From the repository root, run `node web/analyzer.test.js` to check four tempo/meter fixtures and the minimum-duration guard for the local analyzer.
+From the repository root, run `node web/analyzer.test.js` to check eight tempo/meter fixtures covering Rumba, Discofox, Cha-Cha-Cha, Jive, Quickstep, and both waltzes, plus the minimum-duration guard.
 
 From `server/`, run `python test_analysis.py /path/to/test-audio.mp4`. This checks decoding and JSON response via the local API. `python test_analysis.py --synthetic` generates known 4/4 and 3/4 click tracks and checks BPM estimates without requiring any private test recording.
 
@@ -57,6 +57,5 @@ From `server/`, run `python test_analysis.py /path/to/test-audio.mp4`. This chec
 
 - A few seconds of music may not contain enough information to decide meter reliably; the API reports `Unklar` instead of claiming certainty.
 - Half/double-time ambiguity is common in pop and dance music. The API returns alternatives and confidence.
-- Matching is based on tempo and rhythmic accent estimates. Reliable distinction among Discofox, Rumba, Cha-Cha-Cha, Jive, and the waltzes would require labeled training data and evaluation across diverse music.
-- Bachata is now included as a possible alternative from 108 to 152 BPM, but the app does not claim to recognize its guitar/percussion pattern; tempo overlap with Cha-Cha-Cha and other 4/4 music is substantial.
+- The app recommends Rumba, Discofox, Cha-Cha-Cha, Jive, Quickstep, and the two waltzes from tempo and likely meter. Bachata is included as a possible alternative from 108 to 152 BPM. These are tempo-based recommendations, not reliable genre recognition; Bachata, Cha-Cha-Cha, and Discofox overlap substantially.
 - There is no user account, rate limiting, abuse monitoring, or production SLA in this low-cost prototype.
