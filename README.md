@@ -1,10 +1,10 @@
 # DanceMatch 3.0
 
-Mobile-first web app for recording 18 seconds of music, estimating tempo and likely meter on a Python API, and suggesting suitable social dances. Dance suggestions are transparent tempo/accent heuristics; this is not a trained genre classifier.
+Mobile-first web app for recording 18 seconds of music, estimating tempo and likely meter locally in the browser, and suggesting suitable social dances. The optional Python API is included for hosted deployments. Dance suggestions are transparent tempo/accent heuristics; this is not a trained genre classifier.
 
 ## Project layout
 
-- `web/` — static mobile web app and PWA assets for Netlify
+- `web/` — static mobile web app, local audio analyzer, and PWA assets for Netlify
 - `server/` — FastAPI + librosa analysis service for Render
 - `render.yaml` — Render Blueprint for the API
 
@@ -21,13 +21,17 @@ uvicorn main:app --reload
 
 Set `ALLOWED_ORIGINS=http://localhost:8888,https://snazzy-unicorn-0b9f44.netlify.app` for local and deployed frontend testing. Serve `web/` over localhost (for example `python -m http.server 8888 -d ../web`). Set `window.DANCEMATCH_API_URL` in `web/config.js` to `http://localhost:8000` while testing.
 
-## Deploy the API to Render
+## Zero-cost mode: analyze locally in the browser
+
+Leave `window.DANCEMATCH_API_URL` empty in `web/config.js`. The browser decodes the recording or selected audio file and performs onset, tempo, and likely-meter analysis on the device. Audio is not uploaded and no API host, card, or extra account is needed. The user can then publish the contents of `web/` to the existing Netlify site.
+
+## Optional Python API on Render
 
 1. Push the contents of this folder to a Git repository you control.
 2. In Render, create a **Blueprint** from that repository and select `render.yaml`.
 3. Keep the service on the Free plan to avoid a paid service. Initial build downloads the Docker image and Python dependencies and may take several minutes. Render describes Free instances as suitable for testing and hobby projects, not production use.
 4. Wait until `/health` returns `{"status":"ok","version":"1.0.0"}`. Copy the HTTPS service URL.
-5. In `web/config.js`, set `window.DANCEMATCH_API_URL` to that URL, without a trailing slash.
+5. In `web/config.js`, set `window.DANCEMATCH_API_URL` to that URL, without a trailing slash. The browser analyzer remains the default when this value is empty.
 
 Free services sleep after 15 minutes without traffic; waking can take about a minute. The ephemeral filesystem is fine for this app because audio is temporary and no user data is stored. Free services have usage limits, so check the Render dashboard; do not select a paid plan unless intended. See [Render's Free service limitations](https://render.com/docs/free).
 
