@@ -49,6 +49,8 @@ Audio is written to a temporary file only while FFmpeg/librosa decode and analyz
 
 ## Validation
 
+From the repository root, run `node web/analyzer.test.js` to check four tempo/meter fixtures and the minimum-duration guard for the local analyzer.
+
 From `server/`, run `python test_analysis.py /path/to/test-audio.mp4`. This checks decoding and JSON response via the local API. `python test_analysis.py --synthetic` generates known 4/4 and 3/4 click tracks and checks BPM estimates without requiring any private test recording.
 
 ## Known limits
