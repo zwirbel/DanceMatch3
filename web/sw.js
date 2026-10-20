@@ -1,4 +1,4 @@
-const CACHE='dancematch-v3.4';
+const CACHE='dancematch-v3.5';
 const ASSETS=['./','./index.html','./config.js','./analyzer.js','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS))));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));
