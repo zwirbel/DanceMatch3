@@ -1,6 +1,11 @@
 name: Train DanceMatch baseline
 
 on:
+  push:
+    branches: [feature/dance-style-training]
+    paths:
+      - "training/**"
+      - ".github/workflows/train-dance-baseline.yml"
   workflow_dispatch:
     inputs:
       max_items:
@@ -35,7 +40,7 @@ jobs:
           HF_HUB_DISABLE_TELEMETRY: "1"
         run: |
           cd training
-          python train_baseline.py --dataset Yi3852/MuCUE --config ballroom_genres --max-items "${{ inputs.max_items }}" --out artifacts
+          python train_baseline.py --dataset Yi3852/MuCUE --config ballroom_genres --max-items "${{ inputs.max_items || '0' }}" --out artifacts
       - name: Upload evaluation and model
         if: always()
         uses: actions/upload-artifact@v4
