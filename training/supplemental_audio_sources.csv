@@ -1,3 +1,4 @@
 dance,title,artist,source_url,license,download,notes
-Bachata,Bachata,Elijah_K,https://freemusicarchive.org/music/elijah-k/single/bachata/,"CC BY 4.0; verify before use",yes,One starter title only; not enough for model training
-Salsa,Latin Salsa Caliente Dance Floor Cut,Alex Morgan,https://freemusicarchive.org/index.php/music/alex-morgan/bossa-nova-latin-jazz-vol-2/latin-salsa-caliente-dance-floor-cut/,"CC BY 4.0; verify before use",yes,One starter title only; not enough for model training
+Bachata,Bachata,Elijah_K,https://freemusicarchive.org/music/elijah-k/single/bachata/,"CC BY 4.0",yes,"Non-AI track; 1:16; starter only; credit artist"
+Bachata,Japanese Bachata,Chello,https://audio.com/chello/audio/japanese-bachata,"CC0 1.0",yes,"2:08; Audio.com page explicitly lists CC0; retain source and license evidence"
+Salsa,Latin Salsa Caliente Dance Floor Cut,Alex Morgan,https://freemusicarchive.org/index.php/music/alex-morgan/bossa-nova-latin-jazz-vol-2/latin-salsa-caliente-dance-floor-cut/,"CC BY 4.0",yes,"3:24; FMA lists CC BY 4.0; AI-generated; one Salsa track only; credit artist"
