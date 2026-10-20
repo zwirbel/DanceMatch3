@@ -76,15 +76,20 @@ def download_one(row):
             sys.executable, "-m", "yt_dlp", "--no-warnings", "--no-progress",
             "-x", "--audio-format", "mp3", "-o", template, page_url
         ], check=True)
-        files = [p for p in target_dir.glob(stem + ".*") if p.suffix.lower() in {".mp3", ".m4a", ".wav", ".ogg", ".opus"}]
+        files = [p for p in target_dir.glob(stem + ".*")
+                 if p.suffix.lower() in {".mp3", ".m4a", ".wav", ".ogg", ".opus"}]
         if files:
             print("Downloaded via yt-dlp:", files[0])
             return files[0]
     except Exception as exc:
         last_error = exc
-    raise RuntimeError("Could not download source page. Open it directly and verify license. Last error: " + str(last_error))
+    raise RuntimeError(
+        "Could not download source page. Open it directly and verify license. Last error: "
+        + str(last_error)
+    )
 
 def main():
+    OUT.mkdir(parents=True, exist_ok=True)
     with MANIFEST.open(encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     metadata = []
@@ -110,12 +115,14 @@ def main():
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(metadata)
-    counts = {name: sum(1 for item in metadata if item["dance"].lower() == name.lower())
-              for name in ("Bachata", "Discofox", "Salsa")}
-    print("\\nDownloaded counts:", counts)
+    counts = {
+        name: sum(1 for item in metadata if item["dance"].lower() == name.lower())
+        for name in ("Bachata", "Discofox", "Salsa")
+    }
+    print("\nDownloaded counts:", counts)
     print("WARNING: one title per class is not enough for robust training; Discofox is still unsourced.")
     if failures:
-        print("\\nFailures:")
+        print("\nFailures:")
         for item in failures:
             print(" -", item)
 
