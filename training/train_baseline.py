@@ -22,11 +22,18 @@ def pick_key(columns, candidates):
     return next((lower[k] for k in candidates if k in lower), None)
 
 def audio_features(audio_obj):
+    # datasets v3 returns a dict; datasets v4 may return a TorchCodec AudioDecoder.
     if isinstance(audio_obj, dict):
         y = audio_obj.get("array")
         sr = audio_obj.get("sampling_rate", 22050)
+    elif hasattr(audio_obj, "get_all_samples"):
+        samples = audio_obj.get_all_samples()
+        y = getattr(samples, "data", None)
+        sr = getattr(samples, "sample_rate", 22050)
+        if hasattr(y, "detach"):
+            y = y.detach().cpu().numpy()
     else:
-        raise ValueError("Audio column is not decoded into an {array, sampling_rate} object.")
+        raise ValueError(f"Unsupported audio value type: {type(audio_obj).__name__}")
     if y is None:
         raise ValueError("Audio sample is missing its array.")
     y = np.asarray(y, dtype=np.float32)
@@ -57,30 +64,28 @@ def audio_features(audio_obj):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="Yi3852/MuCUE")
-    ap.add_argument("--config", default="ballroom_genres")
+    ap.add_argument("--split", default="ballroom_genres", help="Named split within the dataset")
     ap.add_argument("--test-size", type=float, default=0.25)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max-items", type=int, default=0, help="Optional small smoke test; 0 means all rows")
     ap.add_argument("--out", default="artifacts")
     args = ap.parse_args()
     try:
-        ds = load_dataset(args.dataset, args.config)
+        # MuCUE has one config ("default") and named task splits such as ballroom_genres.
+        # Loading the requested split avoids downloading unrelated music tasks.
+        ds = load_dataset(args.dataset, split=args.split)
     except Exception as e:
-        raise SystemExit(f"Could not load dataset/config {args.dataset}/{args.config}: {e}")
-    rows = []
-    for split_name, split in ds.items():
-        for row in split:
-            rows.append(row)
+        raise SystemExit(f"Could not load dataset/split {args.dataset}/{args.split}: {e}")
     if args.max_items:
-        rows = rows[:args.max_items]
-    if not rows:
-        raise SystemExit("Dataset returned no rows.")
-    audio_key = pick_key(rows[0].keys(), AUDIO_KEYS)
-    label_key = pick_key(rows[0].keys(), LABEL_KEYS)
+        ds = ds.select(range(min(args.max_items, len(ds))))
+    if len(ds) == 0:
+        raise SystemExit("Dataset split returned no rows.")
+    audio_key = pick_key(ds.column_names, AUDIO_KEYS)
+    label_key = pick_key(ds.column_names, LABEL_KEYS)
     if not audio_key or not label_key:
-        raise SystemExit("Dataset schema not recognized. Columns: " + ", ".join(rows[0].keys()))
+        raise SystemExit("Dataset schema not recognized. Columns: " + ", ".join(ds.column_names))
     X, y, skipped = [], [], 0
-    for i, row in enumerate(rows):
+    for i, row in enumerate(ds):
         label = row.get(label_key)
         if not isinstance(label, str) or not label.strip():
             skipped += 1
@@ -109,7 +114,7 @@ def main():
     pred = model.predict(X_test)
     report = classification_report(y_test, pred, output_dict=True, zero_division=0)
     report_out = {
-        "dataset": args.dataset, "config": args.config,
+        "dataset": args.dataset, "dataset_split": args.split,
         "usable_tracks": len(y), "skipped_rows": skipped, "class_counts": counts,
         "split": {"train": len(y_train), "test": len(y_test), "track_level": True},
         "macro_f1": float(f1_score(y_test, pred, average="macro")),
