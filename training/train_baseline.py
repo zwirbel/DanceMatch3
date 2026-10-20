@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
-"""Track-level DanceMatch baseline. Experimental; not production inference."""
+"""Streaming track-level DanceMatch baseline; avoids caching the full dataset locally."""
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import gc
+import json
+import os
+import shutil
+import tempfile
+from itertools import islice
 from pathlib import Path
+
+# Isolate Hugging Face files to a DanceMatch-specific cache so it can be cleaned
+# safely without deleting unrelated caches. Set this BEFORE importing datasets/hub.
+DEFAULT_CACHE_BASE = Path("/content") if Path("/content").exists() else Path(tempfile.gettempdir())
+CACHE_ROOT = Path(os.environ.get("DANCEMATCH_CACHE_DIR", str(DEFAULT_CACHE_BASE / "dancematch_hf_cache")))
+os.environ["HF_HOME"] = str(CACHE_ROOT)
+os.environ["HF_HUB_CACHE"] = str(CACHE_ROOT / "hub")
+os.environ["HF_DATASETS_CACHE"] = str(CACHE_ROOT / "datasets")
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+
 import numpy as np
 import librosa
 from datasets import load_dataset
@@ -17,12 +34,44 @@ import joblib
 LABEL_KEYS = ("answer", "label", "dance", "genre", "class", "correct_choice")
 AUDIO_KEYS = ("audio", "music", "sound", "clip")
 
+
+def directory_size(path: Path) -> int:
+    total = 0
+    if not path.exists():
+        return total
+    for item in path.rglob("*"):
+        try:
+            if item.is_file() and not item.is_symlink():
+                total += item.stat().st_size
+        except OSError:
+            pass
+    return total
+
+
+def disk_report(prefix: str) -> None:
+    disk_root = Path("/content") if Path("/content").exists() else Path.cwd()
+    usage = shutil.disk_usage(disk_root)
+    print(f"{prefix}: {usage.free / (1024**3):.2f} GiB frei von {usage.total / (1024**3):.2f} GiB")
+
+
+def cleanup_cache(keep_cache: bool) -> None:
+    if keep_cache:
+        print(f"Hugging Face-Cache bleibt für Wiederverwendung erhalten: {CACHE_ROOT}")
+        return
+    if CACHE_ROOT.exists():
+        bytes_before = directory_size(CACHE_ROOT)
+        shutil.rmtree(CACHE_ROOT, ignore_errors=True)
+        print(f"Projekt-Cache bereinigt (vorher ca. {bytes_before / (1024**2):.1f} MiB): {CACHE_ROOT}")
+    disk_report("Speicher nach Cache-Bereinigung")
+
+
 def pick_key(columns, candidates):
     lower = {str(c).lower(): c for c in columns}
     return next((lower[k] for k in candidates if k in lower), None)
 
+
 def audio_features(audio_obj):
-    # datasets v3 returns a dict; datasets v4 may return a TorchCodec AudioDecoder.
+    # datasets v3 returns a dict; newer versions may return an AudioDecoder.
     if isinstance(audio_obj, dict):
         y = audio_obj.get("array")
         sr = audio_obj.get("sampling_rate", 22050)
@@ -41,7 +90,7 @@ def audio_features(audio_obj):
         y = np.mean(y, axis=0) if y.shape[0] < y.shape[-1] else np.mean(y, axis=1)
     if len(y) < sr * 3:
         raise ValueError("Audio clip shorter than 3 seconds.")
-    # Use a reproducible 18-second crop; resample for manageable CPU cost.
+    # Keep only the first 18 seconds for analysis.
     y = y[: int(sr * 18)]
     y = librosa.resample(y, orig_sr=sr, target_sr=22050) if sr != 22050 else y
     sr = 22050
@@ -61,6 +110,7 @@ def audio_features(audio_obj):
     feats.extend([float(np.median(tempo)), float(np.std(onset)), float(np.mean(onset))])
     return np.asarray(feats, dtype=np.float32)
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="Yi3852/MuCUE")
@@ -69,33 +119,66 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--max-items", type=int, default=0, help="Optional small smoke test; 0 means all rows")
     ap.add_argument("--out", default="artifacts")
+    ap.add_argument("--keep-cache", action="store_true", help="Keep the isolated Hugging Face cache for faster reruns")
     args = ap.parse_args()
-    try:
-        # MuCUE has one config ("default") and named task splits such as ballroom_genres.
-        # Pass config and split separately; otherwise ballroom_genres may be mistaken for a config.
-        ds = load_dataset(args.dataset, name="default", split=args.split)
-    except Exception as e:
-        raise SystemExit(f"Could not load dataset/split {args.dataset}/{args.split}: {e}")
-    if args.max_items:
-        ds = ds.select(range(min(args.max_items, len(ds))))
-    if len(ds) == 0:
-        raise SystemExit("Dataset split returned no rows.")
-    audio_key = pick_key(ds.column_names, AUDIO_KEYS)
-    label_key = pick_key(ds.column_names, LABEL_KEYS)
-    if not audio_key or not label_key:
-        raise SystemExit("Dataset schema not recognized. Columns: " + ", ".join(ds.column_names))
+
+    # Remove leftovers from an interrupted previous run before checking free space.
+    if not args.keep_cache and CACHE_ROOT.exists():
+        old_bytes = directory_size(CACHE_ROOT)
+        shutil.rmtree(CACHE_ROOT, ignore_errors=True)
+        print(f"Bereinige Cache-Reste des vorherigen Laufs: {old_bytes / (1024**2):.1f} MiB")
+    disk_report("Vor dem Streaming-Download")
+    disk_root = Path("/content") if Path("/content").exists() else Path.cwd()
+    free_gib = shutil.disk_usage(disk_root).free / (1024**3)
+    if free_gib < 0.75:
+        raise SystemExit(
+            f"Nur {free_gib:.2f} GiB freier Speicher. Aus Sicherheitsgründen startet das Training nicht. "
+            "Bitte Runtime neu starten oder Speicher freigeben und erneut ausführen."
+        )
+
     X, y, skipped = [], [], 0
-    for i, row in enumerate(ds):
-        label = row.get(label_key)
-        if not isinstance(label, str) or not label.strip():
-            skipped += 1
-            continue
+    seen = 0
+    try:
         try:
-            X.append(audio_features(row[audio_key]))
-            y.append(label.strip())
+            # Streaming is the key safeguard: do not download/cache the full Arrow dataset.
+            ds = load_dataset(args.dataset, name="default", split=args.split, streaming=True)
         except Exception as e:
-            skipped += 1
-            print(f"Skipping row {i}: {e}")
+            raise SystemExit(f"Could not stream dataset/split {args.dataset}/{args.split}: {e}") from e
+
+        columns = getattr(ds, "column_names", None)
+        if not columns:
+            raise SystemExit("Dataset schema is unavailable in streaming mode.")
+        audio_key = pick_key(columns, AUDIO_KEYS)
+        label_key = pick_key(columns, LABEL_KEYS)
+        if not audio_key or not label_key:
+            raise SystemExit("Dataset schema not recognized. Columns: " + ", ".join(map(str, columns)))
+
+        rows = ds if args.max_items == 0 else islice(ds, args.max_items)
+        print(f"Streaming aktiv; verarbeite {'alle' if args.max_items == 0 else args.max_items} Zeilen maximal.")
+        for i, row in enumerate(rows):
+            seen += 1
+            try:
+                label = row.get(label_key)
+                if not isinstance(label, str) or not label.strip():
+                    skipped += 1
+                    continue
+                X.append(audio_features(row[audio_key]))
+                y.append(label.strip())
+            except Exception as e:
+                skipped += 1
+                print(f"Skipping row {i}: {e}")
+            finally:
+                # Drop the row/audio decoder before requesting the next sample.
+                del row
+                if i % 25 == 0:
+                    gc.collect()
+                    disk_report(f"Streaming-Fortschritt: {seen} Zeilen")
+        del ds
+        gc.collect()
+    finally:
+        # Runs on success, exceptions, SystemExit and keyboard interruption.
+        cleanup_cache(args.keep_cache)
+
     if len(X) < 30 or len(set(y)) < 2:
         raise SystemExit(f"Not enough usable labeled tracks ({len(X)} clips, {len(set(y))} classes).")
     X = np.vstack(X)
@@ -115,7 +198,7 @@ def main():
     report = classification_report(y_test, pred, output_dict=True, zero_division=0)
     report_out = {
         "dataset": args.dataset, "dataset_split": args.split,
-        "usable_tracks": len(y), "skipped_rows": skipped, "class_counts": counts,
+        "usable_tracks": len(y), "rows_seen": seen, "skipped_rows": skipped, "class_counts": counts,
         "split": {"train": len(y_train), "test": len(y_test), "track_level": True},
         "macro_f1": float(f1_score(y_test, pred, average="macro")),
         "classification_report": report,
@@ -123,10 +206,15 @@ def main():
         "class_order": sorted(set(y)),
         "caveat": "Small-data feature baseline; not validated for 18-second phone recordings or the nine target classes."
     }
-    out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, out / "dance_baseline.joblib")
     (out / "evaluation.json").write_text(json.dumps(report_out, indent=2), encoding="utf-8")
-    print(json.dumps({"usable_tracks": len(y), "class_counts": counts, "macro_f1": report_out["macro_f1"], "artifacts": str(out)}, indent=2))
+    print(json.dumps({
+        "usable_tracks": len(y), "rows_seen": seen, "skipped_rows": skipped,
+        "class_counts": counts, "macro_f1": report_out["macro_f1"], "artifacts": str(out)
+    }, indent=2))
+
 
 if __name__ == "__main__":
     main()
