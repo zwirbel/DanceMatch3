@@ -260,10 +260,31 @@ def main():
     if too_small:
         raise SystemExit("Für eine stratifizierte Train/Test-Bewertung braucht jede vorhandene Klasse mindestens 2 unabhängige Musikstücke. Zu klein: " + json.dumps(too_small, ensure_ascii=False))
     missing_target_classes = [label for label in TARGET_CLASSES if label not in counts]
-    # Hold out whole source rows (one feature vector per source clip).
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=args.test_size, random_state=args.seed, stratify=y
-    )
+    # Split within each class. If a class has only one independent track, keep it
+    # in training and do not pretend that its performance was evaluated.
+    rng = np.random.default_rng(args.seed)
+    train_indices, test_indices = [], []
+    classes_without_holdout = []
+    for label in sorted(counts):
+        indices = np.flatnonzero(y == label)
+        rng.shuffle(indices)
+        if len(indices) < 2:
+            train_indices.extend(indices.tolist())
+            classes_without_holdout.append(label)
+            continue
+        n_test = max(1, int(round(len(indices) * args.test_size)))
+        n_test = min(n_test, len(indices) - 1)
+        test_indices.extend(indices[:n_test].tolist())
+        train_indices.extend(indices[n_test:].tolist())
+
+    if not test_indices:
+        raise SystemExit('Für eine Bewertung sind mindestens zwei unabhängige Beispiele einer Klasse nötig.')
+    train_indices = np.asarray(train_indices, dtype=int)
+    test_indices = np.asarray(test_indices, dtype=int)
+    rng.shuffle(train_indices)
+    rng.shuffle(test_indices)
+    X_train, X_test = X[train_indices], X[test_indices]
+    y_train, y_test = y[train_indices], y[test_indices]
     model = make_pipeline(
         SimpleImputer(strategy="median"),
         StandardScaler(),
@@ -279,11 +300,12 @@ def main():
         "class_counts": counts, "target_classes": list(TARGET_CLASSES), "missing_target_classes": missing_target_classes,
         "is_nine_class_model": len(missing_target_classes) == 0,
         "split": {"train": len(y_train), "test": len(y_test), "track_level": True},
+        "classes_without_holdout_examples": classes_without_holdout,
         "macro_f1": float(f1_score(y_test, pred, average="macro")),
         "classification_report": report,
         "confusion_matrix": confusion_matrix(y_test, pred, labels=sorted(set(y))).tolist(),
         "class_order": sorted(set(y)),
-        "caveat": "Small-data feature baseline; use only appropriately licensed audio. Nine-class status requires all target classes, and performance must be validated on independent real-world phone recordings."
+        "caveat": "Small-data feature baseline; use only appropriately licensed audio. Classes with fewer than two independent tracks are kept in training and have no held-out evaluation. Nine-class status requires all target classes, and performance must be validated on independent real-world phone recordings."
     }
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
