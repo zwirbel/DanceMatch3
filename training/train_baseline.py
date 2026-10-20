@@ -72,8 +72,8 @@ def main():
     args = ap.parse_args()
     try:
         # MuCUE has one config ("default") and named task splits such as ballroom_genres.
-        # Loading the requested split avoids downloading unrelated music tasks.
-        ds = load_dataset(args.dataset, split=args.split)
+        # Pass config and split separately; otherwise ballroom_genres may be mistaken for a config.
+        ds = load_dataset(args.dataset, name="default", split=args.split)
     except Exception as e:
         raise SystemExit(f"Could not load dataset/split {args.dataset}/{args.split}: {e}")
     if args.max_items:
