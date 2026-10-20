@@ -4,7 +4,7 @@
 Run in an internet-enabled Python/Colab runtime:
     python training/prepare_supplemental_audio.py
 
-This is not a complete training dataset. It only downloads the two sources in the manifest.
+This is a small starter set, not a complete training dataset. Additional candidate sources are listed in music_source_candidates.csv; candidates marked weak_proxy or review must be manually verified before training.
 """
 import csv
 import html
@@ -120,7 +120,8 @@ def main():
         for name in ("Bachata", "Discofox", "Salsa")
     }
     print("\nDownloaded counts:", counts)
-    print("WARNING: one title per class is not enough for robust training; Discofox is still unsourced.")
+    print("WARNING: this starter set is far too small for robust training.")
+    print("See music_source_candidates.csv for additional sources; Discofox entries are weak proxies and must be verified by listening before training.")
     if failures:
         print("\nFailures:")
         for item in failures:
