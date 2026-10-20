@@ -105,8 +105,16 @@
     for (let bpm = 55; bpm <= 210; bpm += 0.5) {
       const lag = 60 * frameRate / bpm;
       if (lag < 1 || lag >= x.length / 2) continue;
-      const score = 0.7 * correlation(x, lag) + 0.2 * correlation(x, 2 * lag) + 0.1 * correlation(x, Math.max(1, Math.round(lag / 2)));
-      const prior = bpm < 70 ? -0.06 : bpm >= 195 && bpm <= 210 ? 0.015 : bpm >= 150 && bpm < 195 ? 0.01 : bpm >= 100 && bpm < 150 ? 0.015 : bpm >= 78 ? 0 : 0;
+      let score = 0.68 * correlation(x, lag) + 0.20 * correlation(x, 2 * lag) + 0.12 * correlation(x, Math.max(1, lag / 2));
+      // If a strong pulse exists halfway through this candidate beat, this may
+      // be a half-time interpretation (e.g. 63 instead of 126 BPM).
+      const fasterPulse = correlation(x, Math.max(1, lag / 2));
+      if (bpm < 110 && fasterPulse > 0.28) score -= 0.22;
+      // Likewise avoid interpreting every third beat as the main pulse when
+      // the faster dance pulse is clearly present.
+      const triplePulse = correlation(x, Math.max(1, lag / 3));
+      if (bpm < 75 && triplePulse > 0.28) score -= 0.25;
+      const prior = bpm < 70 ? -0.03 : bpm >= 195 && bpm <= 210 ? 0.01 : bpm >= 150 && bpm < 195 ? 0.008 : bpm >= 100 && bpm < 150 ? 0.01 : bpm >= 78 ? 0 : 0;
       out.push({ bpm, score: score + prior, periodicity: score });
     }
     return out.sort((a, b) => b.score - a.score);
