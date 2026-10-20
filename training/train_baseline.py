@@ -170,7 +170,8 @@ def audio_features(audio_obj):
     # Preserve differences between the beginning, middle, and end of a clip.
     # Short supplementary excerpts remain supported; use fixed-size zero vectors
     # where a segment is too short for meaningful spectral analysis.
-    chunk_feature_count = len(_spectral_features(np.zeros(sr * 2, dtype=np.float32), sr, include_std=False))
+    # 20 MFCC + 12 chroma + 7 spectral-contrast + centroid + rolloff + ZCR = 42.
+    chunk_feature_count = 42
     for chunk in np.array_split(y, 3):
         if len(chunk) >= sr * 2:
             feats.extend(_spectral_features(chunk, sr, include_std=False))
