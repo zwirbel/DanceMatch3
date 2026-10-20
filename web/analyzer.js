@@ -106,7 +106,7 @@
       const lag = 60 * frameRate / bpm;
       if (lag < 1 || lag >= x.length / 2) continue;
       const score = 0.7 * correlation(x, lag) + 0.2 * correlation(x, 2 * lag) + 0.1 * correlation(x, Math.max(1, Math.round(lag / 2)));
-      const prior = bpm < 78 ? -0.28 : bpm >= 195 && bpm <= 210 ? 0.32 : bpm >= 150 && bpm < 195 ? 0.18 : bpm >= 100 && bpm < 150 ? 0.12 : bpm >= 78 ? 0.02 : 0;
+      const prior = bpm < 70 ? -0.06 : bpm >= 195 && bpm <= 210 ? 0.015 : bpm >= 150 && bpm < 195 ? 0.01 : bpm >= 100 && bpm < 150 ? 0.015 : bpm >= 78 ? 0 : 0;
       out.push({ bpm, score: score + prior, periodicity: score });
     }
     return out.sort((a, b) => b.score - a.score);
@@ -148,17 +148,22 @@
 
   function recommend(bpm, meter) {
     const triple = meter.startsWith('3/4');
-    const bachata = bpm >= 108 && bpm <= 152 ? ['Bachata (bei passendem Latin-Rhythmus)'] : [];
+    const bachata = bpm >= 95 && bpm <= 155
+      ? ['Bachata (bei typischem 1–2–3–Tap-Rhythmus)'] : [];
+    const salsa = bpm >= 105 && bpm <= 190
+      ? ['Salsa (bei typischem Clave-/Latin-Rhythmus)'] : [];
+
     if (triple) return bpm >= 145
-      ? ['Wiener Walzer', ['Langsamer Walzer', 'Discofox (Halftime prüfen)'], 'Dreiertakt wahrscheinlich; bei diesem Tempo passt Wiener Walzer. Höre auf den Walzerschritt 1–2–3.']
+      ? ['Wiener Walzer', ['Langsamer Walzer', 'Discofox (Halftime prüfen)'], 'Dreiertakt wahrscheinlich; höre auf den Walzerschritt 1–2–3.']
       : ['Langsamer Walzer', ['Wiener Walzer (nur bei höherem Tempo)', 'Rumba'], 'Dreiertakt wahrscheinlich; höre auf den Walzerschritt 1–2–3.'];
-    if (bpm < 94) return ['Rumba', ['Langsamer Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges Tempo; falls jeder zweite Puls passt, kann es Discofox in Halftime sein.'];
-    if (bpm < 105) return ['Rumba', ['Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges 4/4-Tempo passt zur Rumba; bei Unsicherheit auch Discofox gegenhören.'];
-    if (bpm < 118) return ['Discofox', ['Rumba', ...bachata], 'Mittleres Tempo; Rumba oder Bachata können bei passendem Musikrhythmus ebenfalls passen.'];
-    if (bpm < 132) return ['Cha-Cha-Cha', ['Discofox', ...bachata, 'Rumba (Halftime prüfen)'], 'Tempo passt zu Cha-Cha-Cha; Bachata ist bei passendem Latin-Gitarren- und Perkussionsrhythmus ebenfalls möglich.'];
-    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', ...bachata, 'Jive (Halftime prüfen)'], 'Flottes Tempo passt zu Discofox; Bachata bleibt bei charakteristischem Latin-Rhythmus möglich.'];
-    if (bpm < 190) return ['Jive', ['Discofox (Halftime prüfen)', 'Quickstep (nur bei sehr schnellem 4/4)'], 'Schnelles 4/4-Tempo passt zu Jive; achte auf den federnden Grundrhythmus.'];
-    return ['Quickstep', ['Jive (Halftime prüfen)', 'Discofox (Halftime prüfen)'], 'Sehr schnelles 4/4-Tempo passt zu Quickstep; höre auf den typischen Galopp.'];
+
+    if (bpm < 88) return ['Rumba', ['Langsamer Discofox', 'Langsamer Walzer (nur bei 3/4)'], 'Ruhiges Tempo. Prüfe, ob der Grundpuls zur Rumba passt oder Discofox im halben Tempo natürlicher wirkt.'];
+    if (bpm < 105) return ['Rumba', ['Discofox', ...bachata], 'Ruhiges bis mittleres 4/4-Tempo. Der Musikcharakter ist entscheidend; Tempo allein erkennt den Tanz nicht sicher.'];
+    if (bpm < 118) return ['Discofox', ['Rumba', ...bachata, ...salsa], 'Mittleres Tempo: Discofox ist ein guter Startpunkt. Bei klarer Bachata- oder Salsa-Rhythmik kann ein Latin-Tanz besser passen.'];
+    if (bpm < 132) return ['Cha-Cha-Cha', ['Discofox', ...bachata, ...salsa], 'Das Tempo passt zu Cha-Cha-Cha. Höre auf den typischen „cha-cha-cha“-Schritt; Salsa und Bachata brauchen zusätzlich ihren charakteristischen Rhythmus.'];
+    if (bpm < 150) return ['Discofox', ['Cha-Cha-Cha', ...bachata, ...salsa, 'Jive (Halftime prüfen)'], 'Flottes Tempo. Vergleiche den geraden Discofox-Puls mit der Latin-Rhythmik von Salsa oder Bachata.'];
+    if (bpm < 178) return ['Jive', ['Discofox (Halftime prüfen)', ...salsa, 'Quickstep (bei passendem 4/4-Galopp)'], 'Schnelles Tempo. Prüfe Halbzeit und Musikcharakter: Salsa kann schnell wirken, ohne dass es Jive ist.'];
+    return ['Quickstep', ['Jive (Halftime prüfen)', ...salsa, 'Discofox (Halftime prüfen)'], 'Sehr schnelles Tempo. Quickstep passt nur, wenn der federnde 4/4-Galopp hörbar ist; bei Latin-Rhythmik auch Salsa gegenprüfen.'];
   }
 
   function analyzePcm(samples, sampleRate) {
@@ -171,7 +176,7 @@
       .filter(x => x >= 55 && x <= 210).map(Math.round);
     const dance = recommend(bpm, meter.meter);
     const tempoConfidenceScore = clamp(ranked[0].periodicity * 2.8, 0, 0.85);
-    const overlappingDanceRange = !meter.meter.startsWith('3/4') && bpm >= 108 && bpm <= 152;
+    const overlappingDanceRange = !meter.meter.startsWith('3/4') && bpm >= 105 && bpm <= 155;
     const confidenceScore = tempoConfidenceScore * (meter.meter === 'Unklar' ? 0.55 : 1) * (overlappingDanceRange ? 0.7 : 1);
     return {
       bpm: Math.round(bpm * 10) / 10,
@@ -185,7 +190,7 @@
       confidence_score: Math.round(confidenceScore * 100) / 100,
       beat_consistency: 0,
       tip: dance[2],
-      note: 'Lokale Tempo- und Akzentanalyse, kein trainierter Tanzstil-Klassifikator. Bachata und Cha-Cha können sich im Tempo überschneiden; Instrumente und Musikstil sind hier nicht zuverlässig klassifiziert.',
+      note: 'Lokale Tempo- und Akzentanalyse, kein trainierter Tanzstil-Klassifikator. Bachata, Salsa, Cha-Cha-Cha und Discofox überschneiden sich im Tempo; höre zusätzlich auf den charakteristischen Rhythmus.',
       duration_seconds: Math.round(duration * 10) / 10
     };
   }
