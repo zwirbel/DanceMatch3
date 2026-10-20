@@ -245,6 +245,12 @@ def main():
         # Runs on success, exceptions, SystemExit and keyboard interruption.
         cleanup_cache(args.keep_cache)
 
+    # Add user-supplied audio only after the public dataset cache has been cleaned.
+    base_tracks = len(y)
+    extra_X, extra_y = load_supplemental_tracks(args.supplement_dir)
+    X.extend(extra_X)
+    y.extend(extra_y)
+
     if len(X) < 30 or len(set(y)) < 2:
         raise SystemExit(f"Not enough usable labeled tracks ({len(X)} clips, {len(set(y))} classes).")
     X = np.vstack(X)
