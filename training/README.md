@@ -51,7 +51,7 @@ Run it with `--supplement-dir custom_audio`. Audio is decoded one file at a time
 
 The trainer normalizes source labels to the nine target classes, maps MuCUE `Waltz` to `Slow Waltz`, and excludes MuCUE's `Samba` and `Tango` because they are outside the target list. It reports missing target classes rather than claiming a nine-class model when any class has no examples. Aim for at least 100 independent tracks per class for a meaningful experiment; small initial batches are only a smoke test.
 
-In Google Colab, the notebook includes an optional upload cell. Upload a ZIP with class folders directly at the ZIP root (e.g. `Bachata/...`, `Discofox/...`, `Salsa/...`). The uploaded audio remains in the temporary Colab runtime and is not committed to GitHub.
+In Google Colab, the training notebook automatically runs `prepare_supplemental_audio.py` before training, so no manual ZIP upload is needed. The current starter manifest contains only one Bachata and one Salsa track; this is far too little for reliable classification, and Discofox still has no verified reusable audio source. The notebook reports available supplemental files and the trainer flags classes that lack held-out evaluation.
 
 ## Nine-class target
 
