@@ -29,6 +29,30 @@ The script uses Hugging Face streaming mode so it does not create a full local c
 
 If the dataset's published schema changes, the script stops with a clear message rather than silently guessing labels. Add `--keep-cache` only if you deliberately want to retain the isolated cache for faster repeated runs; the Colab notebook does not enable this option.
 
+
+## Add missing target styles (Discofox, Bachata, Salsa)
+
+The streaming MuCUE source does not contain a verified set for all nine target styles. The trainer now accepts a supplementary directory whose immediate subfolders are canonical dance labels, for example:
+
+```text
+custom_audio/
+  Bachata/
+    bachata_001.mp3
+    bachata_002.wav
+  Discofox/
+    discofox_001.mp3
+  Salsa/
+    salsa_001.wav
+  Jive/
+    jive_101.mp3
+```
+
+Run it with `--supplement-dir custom_audio`. Audio is decoded one file at a time; only feature vectors are kept in memory. Each file contributes one example using its first 18 seconds. Prefer short 15–20 second excerpts from **distinct source tracks**; do not create train/test leakage by placing multiple excerpts of the same song in separate files. Use only audio you own, public-domain/appropriately licensed recordings, or files whose rights holder explicitly permits this use. A streaming service or a song-title list is not a training dataset.
+
+The trainer normalizes source labels to the nine target classes, maps MuCUE `Waltz` to `Slow Waltz`, and excludes MuCUE's `Samba` and `Tango` because they are outside the target list. It reports missing target classes rather than claiming a nine-class model when any class has no examples. Aim for at least 100 independent tracks per class for a meaningful experiment; small initial batches are only a smoke test.
+
+In Google Colab, the notebook includes an optional upload cell. Upload a ZIP with class folders directly at the ZIP root (e.g. `Bachata/...`, `Discofox/...`, `Salsa/...`). The uploaded audio remains in the temporary Colab runtime and is not committed to GitHub.
+
 ## Nine-class target
 
 `Discofox, Cha-Cha-Cha, Rumba, Jive, Slow Waltz, Viennese Waltz, Quickstep, Bachata, Salsa`
