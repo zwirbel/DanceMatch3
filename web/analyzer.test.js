@@ -29,7 +29,10 @@ for (const fixture of [
   assert.ok(Math.abs(result.bpm - fixture.bpm) <= 1.5, `${fixture.bpm} BPM became ${result.bpm}`);
   assert.ok(result.meter.startsWith(fixture.meter), `${fixture.meter} became ${result.meter}`);
   assert.equal(result.dance, fixture.dance);
-  if (fixture.bpm === 126) assert.ok(result.dance_alternatives.some(name => name.startsWith('Bachata')), 'Bachata should be shown as a possible dance in its overlapping tempo range');
+  if (fixture.bpm === 126) {
+    assert.ok(result.dance_alternatives.some(name => name.startsWith('Bachata')), 'Bachata should be shown as a possible dance in its overlapping tempo range');
+    assert.ok(result.dance_alternatives.some(name => name.startsWith('Salsa')), 'Salsa should be shown as a possible dance in its overlapping tempo range');
+  }
   console.log(`${fixture.bpm} BPM ${fixture.meter}: ${result.bpm}, ${result.meter}, ${result.dance}`);
 }
 
