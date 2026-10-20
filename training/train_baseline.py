@@ -98,6 +98,41 @@ def pick_key(columns, candidates):
     return next((lower[k] for k in candidates if k in lower), None)
 
 
+def _spectral_features(y, sr, include_std=True):
+    """Compact timbral features; optionally preserve within-window variation."""
+    matrices = (
+        librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, n_fft=2048, hop_length=512),
+        librosa.feature.chroma_stft(y=y, sr=sr, n_fft=2048, hop_length=512),
+        librosa.feature.spectral_contrast(y=y, sr=sr, n_fft=2048, hop_length=512),
+        librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=512),
+        librosa.feature.spectral_rolloff(y=y, sr=sr, hop_length=512),
+        librosa.feature.zero_crossing_rate(y, frame_length=2048, hop_length=512),
+    )
+    feats = []
+    for matrix in matrices:
+        feats.extend(np.mean(matrix, axis=1).tolist())
+        if include_std:
+            feats.extend(np.std(matrix, axis=1).tolist())
+    return feats
+
+
+def _rhythm_features(onset, sr, hop_length):
+    """Sample onset autocorrelation at dance-relevant BPMs, including half/double-time cues."""
+    bpm_grid = np.arange(50, 241, 5, dtype=np.float32)
+    envelope_rate = sr / hop_length
+    max_lag = int(np.ceil(envelope_rate * 60.0 / 40.0)) + 1
+    if len(onset) < 8 or not np.any(onset):
+        return np.zeros(len(bpm_grid), dtype=np.float32).tolist()
+    ac = librosa.autocorrelate(onset, max_size=max_lag)
+    if len(ac) and ac[0] > 1e-8:
+        ac = ac / ac[0]
+    values = []
+    for bpm in bpm_grid:
+        lag = max(1, int(round(envelope_rate * 60.0 / float(bpm))))
+        values.append(float(ac[lag]) if lag < len(ac) else 0.0)
+    return values
+
+
 def audio_features(audio_obj):
     # datasets v3 returns a dict; newer versions may return an AudioDecoder.
     if isinstance(audio_obj, dict):
@@ -123,19 +158,25 @@ def audio_features(audio_obj):
     y = librosa.resample(y, orig_sr=sr, target_sr=22050) if sr != 22050 else y
     sr = 22050
     y = librosa.util.normalize(y)
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, n_fft=2048, hop_length=512)
-    chroma = librosa.feature.chroma_stft(y=y, sr=sr, n_fft=2048, hop_length=512)
-    contrast = librosa.feature.spectral_contrast(y=y, sr=sr, n_fft=2048, hop_length=512)
-    centroid = librosa.feature.spectral_centroid(y=y, sr=sr, hop_length=512)
-    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, hop_length=512)
-    zcr = librosa.feature.zero_crossing_rate(y, frame_length=2048, hop_length=512)
+
+    # Global timbre plus a coarse temporal map. The old baseline averaged the
+    # whole clip, which discarded where accents and timbral changes occurred.
+    feats = _spectral_features(y, sr, include_std=True)
     onset = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
     tempo = librosa.feature.tempo(onset_envelope=onset, sr=sr, hop_length=512)
-    feats = []
-    for matrix in (mfcc, chroma, contrast, centroid, rolloff, zcr):
-        feats.extend(np.mean(matrix, axis=1).tolist())
-        feats.extend(np.std(matrix, axis=1).tolist())
     feats.extend([float(np.median(tempo)), float(np.std(onset)), float(np.mean(onset))])
+    feats.extend(_rhythm_features(onset, sr, 512))
+
+    # Preserve differences between the beginning, middle, and end of a clip.
+    # Short supplementary excerpts remain supported; use fixed-size zero vectors
+    # where a segment is too short for meaningful spectral analysis.
+    chunk_feature_count = len(_spectral_features(np.zeros(sr * 2, dtype=np.float32), sr, include_std=False))
+    for chunk in np.array_split(y, 3):
+        if len(chunk) >= sr * 2:
+            feats.extend(_spectral_features(chunk, sr, include_std=False))
+        else:
+            feats.extend([0.0] * chunk_feature_count)
+
     return np.asarray(feats, dtype=np.float32)
 
 
@@ -256,9 +297,9 @@ def main():
     X = np.vstack(X)
     y = np.asarray(y)
     counts = {str(k): int(v) for k, v in zip(*np.unique(y, return_counts=True))}
-    too_small = {label: count for label, count in counts.items() if count < 2}
-    if too_small:
-        raise SystemExit("Für eine stratifizierte Train/Test-Bewertung braucht jede vorhandene Klasse mindestens 2 unabhängige Musikstücke. Zu klein: " + json.dumps(too_small, ensure_ascii=False))
+    # Singleton classes are allowed in training, but are never placed in the test set.
+    # This is important for the starter Bachata/Salsa sources: they may help the
+    # classifier recognize a class, but they do NOT establish measured accuracy.
     missing_target_classes = [label for label in TARGET_CLASSES if label not in counts]
     # Split within each class. If a class has only one independent track, keep it
     # in training and do not pretend that its performance was evaluated.
@@ -294,7 +335,7 @@ def main():
     pred = model.predict(X_test)
     report = classification_report(y_test, pred, output_dict=True, zero_division=0)
     report_out = {
-        "dataset": args.dataset, "dataset_split": args.split,
+        "dataset": args.dataset, "dataset_split": args.split, "feature_version": "rhythm-temporal-v2",
         "usable_tracks": len(y), "base_dataset_tracks": base_tracks, "supplemental_tracks": len(extra_y),
         "rows_seen": seen, "skipped_rows": skipped, "filtered_non_target_rows": filtered_non_target,
         "class_counts": counts, "target_classes": list(TARGET_CLASSES), "missing_target_classes": missing_target_classes,
@@ -305,7 +346,7 @@ def main():
         "classification_report": report,
         "confusion_matrix": confusion_matrix(y_test, pred, labels=sorted(set(y))).tolist(),
         "class_order": sorted(set(y)),
-        "caveat": "Small-data feature baseline; use only appropriately licensed audio. Classes with fewer than two independent tracks are kept in training and have no held-out evaluation. Nine-class status requires all target classes, and performance must be validated on independent real-world phone recordings."
+        "caveat": "Small-data rhythm-temporal feature baseline; use only appropriately licensed audio. Classes with fewer than two independent tracks are kept in training and have no held-out evaluation. Nine-class status requires all target classes, and performance must be validated on independent real-world phone recordings."
     }
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
