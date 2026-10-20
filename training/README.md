@@ -58,3 +58,10 @@ In Google Colab, the training notebook automatically runs `prepare_supplemental_
 `Discofox, Cha-Cha-Cha, Rumba, Jive, Slow Waltz, Viennese Waltz, Quickstep, Bachata, Salsa`
 
 Do not label a model as nine-class until the training data includes all nine classes with sufficient independent tracks. For a meaningful first evaluation, aim for at least 100 distinct tracks per class, ideally more, and use independent music for final testing.
+
+
+## Current experiment: rhythm-temporal-v2
+
+The current feature extractor extends the original handcrafted baseline with onset-envelope autocorrelation sampled across 50–240 BPM and separate timbral summaries for the beginning, middle, and end of each 18-second excerpt. This is intended to retain rhythmic and temporal information that a single whole-clip average loses. It is an experiment, **not yet a measured accuracy improvement**; compare the new Macro-F1 and per-class results against the earlier run before integration.
+
+The Colab trainer allows a class with only one distinct track to remain in the training set, but it records that class under `classes_without_holdout_examples` and does not claim a measured test result for it. The current supplementary manifest still contains only one Bachata and one Salsa recording, and no verified Discofox recording. Therefore, a complete and reliable nine-style model is not yet available.
