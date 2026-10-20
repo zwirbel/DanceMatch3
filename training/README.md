@@ -22,7 +22,7 @@ Use Python 3.11. From this directory:
 
 ```bash
 pip install -r requirements.txt
-python train_baseline.py --dataset Yi3852/MuCUE --config ballroom_genres
+python train_baseline.py --dataset Yi3852/MuCUE --split ballroom_genres --max-items 0
 ```
 
 The script loads the Hugging Face dataset, extracts compact audio/rhythm features from each clip, makes a stratified track-level train/test split, reports macro-F1 and per-class recall, and writes a model plus a JSON report under `artifacts/`.
