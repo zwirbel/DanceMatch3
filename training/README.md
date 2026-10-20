@@ -25,9 +25,9 @@ pip install -r requirements.txt
 python train_baseline.py --dataset Yi3852/MuCUE --split ballroom_genres --max-items 0
 ```
 
-The script loads the Hugging Face dataset, extracts compact audio/rhythm features from each clip, makes a stratified track-level train/test split, reports macro-F1 and per-class recall, and writes a model plus a JSON report under `artifacts/`.
+The script uses Hugging Face streaming mode so it does not create a full local copy of the dataset. It extracts features one track at a time, keeps only compact feature vectors, isolates the temporary cache under `DANCEMATCH_CACHE_DIR`, and removes that cache in a `finally` block (including on errors). It makes a stratified track-level train/test split, reports macro-F1 and per-class recall, and writes a model plus a JSON report under `artifacts/`. If free disk space is below 0.75 GiB, it stops before downloading.
 
-If the dataset's published schema changes, the script stops with a clear message rather than silently guessing labels.
+If the dataset's published schema changes, the script stops with a clear message rather than silently guessing labels. Add `--keep-cache` only if you deliberately want to retain the isolated cache for faster repeated runs; the Colab notebook does not enable this option.
 
 ## Nine-class target
 
