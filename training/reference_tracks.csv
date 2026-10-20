@@ -1,0 +1,46 @@
+dance,title,artist,reference_type,source_url,training_status,notes
+Discofox,Wahnsinn,Wolfgang Petry,Discofox repertoire,https://www.dance-charts.de/2026070217463/die-100-besten-discofox-hits-aller-zeiten,candidate,Verify exact recording and beat feel
+Discofox,Atemlos durch die Nacht,Helene Fischer,Discofox playlist,https://www.discofox-antenne.de/playlist/,candidate,Confirm specific version and tempo
+Discofox,Ein Stern (der deinen Namen trägt),DJ Ötzi and Nik P.,Discofox repertoire,https://www.listando.com/de-de/dj/discofox-lieder,candidate,Check exact version
+Discofox,Verdammt ich lieb dich,Matthias Reim,Discofox repertoire,https://www.listando.com/de-de/dj/discofox-lieder,candidate,Verify danceability
+Discofox,You're My Heart You're My Soul,Modern Talking,Discofox repertoire,https://www.dance-charts.de/2026070217463/die-100-besten-discofox-hits-aller-zeiten,candidate,Classic pop/discofox candidate
+Cha-Cha-Cha,Katchi,Ofenbach,Cha-cha practice guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Verify exact edit and syncopation
+Cha-Cha-Cha,Spanish Grease,Willie Bobo,Cha-cha practice guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Latin instrumental
+Cha-Cha-Cha,Perhaps Perhaps Perhaps,Doris Day,Cha-cha song guide,https://www.ballroomdancesongs.com/guides/best-cha-cha-songs,candidate,Check arrangement; can be interpreted differently
+Cha-Cha-Cha,Cherry Pink and Apple Blossom White,Pérez Prado,Latin ballroom example,https://www.dancewami.com/view/best-ballroom-dance-songs-for-beginners-essential-music-for-waltz-tango-cha-cha-more.html,candidate,Mambo-like arrangement; human verification needed
+Cha-Cha-Cha,Sway,Michael Bublé,Common dance-song candidate,https://www.ballroomdancesongs.com/guides/best-cha-cha-songs,candidate,Ambiguous; use as hard negative/alternative after review
+Rumba,Perfidia,Xavier Cugat,International rumba guide,https://www.ballroomdancesongs.com/dances/rumba-international,candidate,Classic Latin orchestra
+Rumba,Sin Luz,José Feliciano,International rumba guide,https://www.ballroomdancesongs.com/dances/rumba-international,candidate,Verify exact recording
+Rumba,Secret,Maroon 5,International rumba guide,https://www.ballroomdancesongs.com/dances/rumba-international,candidate,Pop rumba example
+Rumba,My Girl,The Temptations,International rumba guide,https://www.ballroomdancesongs.com/dances/rumba-international,candidate,Check tempo and phrasing
+Rumba,Stand by Me,Ben E. King,International rumba guide,https://www.ballroomdancesongs.com/dances/rumba-international,candidate,May also fit other social dances
+Jive,(We're Gonna) Rock Around the Clock,Bill Haley & His Comets,Jive guide,https://www.ballroomdancesongs.com/dances/jive,candidate,Classic rock-and-roll jive
+Jive,Runaround Sue,Dion,Jive guide,https://www.ballroomdancesongs.com/dances/jive,candidate,Classic rock-and-roll
+Jive,Jump Jive an' Wail,Brian Setzer Orchestra,Jive guide,https://www.ballroomdancesongs.com/dances/jive,candidate,Strong swing feel
+Jive,Candyman,Christina Aguilera,Jive guide,https://www.ballroomdancesongs.com/dances/jive,candidate,Pop swing candidate
+Jive,Shake It Off,Taylor Swift,Jive guide,https://www.ballroomdancesongs.com/dances/jive,candidate,Modern pop candidate; tempo/version check
+Langsamer Walzer,Moon River,Dancelife Orchestra,Waltz practice guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Confirm exact arrangement is 3/4
+Langsamer Walzer,Song for Viola,Peter Bradley Adams,Waltz practice guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Verify meter in selected recording
+Langsamer Walzer,Come Away with Me,Norah Jones,Waltz song guide,https://www.dancewami.com/view/ballroom-dance-music-guide-essential-tracks-tempos-and-expert-picks-for-every-style.html,candidate,Some versions may not be strict 3/4; verify before labeling
+Langsamer Walzer,The Blue Danube,Johann Strauss II,Classical waltz reference,https://www.dancewami.com/view/ballroom-dance-music-guide-essential-tracks-tempos-and-expert-picks-for-every-style.html,candidate,Specific recording tempo matters
+Langsamer Walzer,You Are the Reason,Calum Scott,Waltz guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Verify arrangement and meter
+Wiener Walzer,The Blue Danube,Johann Strauss II,Viennese waltz reference,https://www.ballroompages.com/ballroom-music/viennese-waltz-music/,candidate,Use a fast 3/4 recording; title alone is not a label
+Wiener Walzer,It's a Man's Man's Man's World,James Brown,Viennese waltz guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Modern Viennese waltz arrangement; verify exact recording
+Wiener Walzer,You Are the Reason,Calum Scott,Viennese waltz guide,https://www.ballroomdancesongs.com/guides/ballroom-practice-playlist-guide,candidate,Verify version and triple meter
+Wiener Walzer,Voices of Spring,Johann Strauss II,Classical Viennese waltz,https://www.ballroompages.com/ballroom-music/viennese-waltz-music/,candidate,Select a clearly triple-meter recording
+Wiener Walzer,Tales from the Vienna Woods,Johann Strauss II,Classical Viennese waltz,https://www.ballroompages.com/ballroom-music/viennese-waltz-music/,candidate,Recording tempo varies
+Quickstep,Walking on Sunshine,Aly & AJ,Quickstep guide,https://www.ballroomdancesongs.com/guides/best-quickstep-songs,candidate,Exact cover/version is important
+Quickstep,Tonight Tonight,Hot Chelle Rae,Quickstep guide,https://www.ballroomdancesongs.com/guides/best-quickstep-songs,candidate,Verify tempo and feel
+Quickstep,ZITTI E BUONI,Måneskin,Quickstep guide,https://www.ballroomdancesongs.com/guides/best-quickstep-songs,candidate,Verify exact Eurovision recording and beat
+Quickstep,In the Mood,Glenn Miller Orchestra,Quickstep guide,https://www.ballroomdancesongs.com/guides/best-quickstep-songs,candidate,Big-band swing reference
+Quickstep,Chattanooga Choo Choo,Glenn Miller Orchestra,Quickstep guide,https://www.ballroomdancesongs.com/guides/best-quickstep-songs,candidate,Big-band swing reference
+Bachata,Propuesta Indecente,Romeo Santos,Bachata beginner guide,https://dynamicbachata.com/blog/best-bachata-songs-beginners/,candidate,Strong genre reference
+Bachata,Darte un Beso,Prince Royce,Bachata beginner guide,https://dynamicbachata.com/blog/best-bachata-songs-beginners/,candidate,Strong genre reference
+Bachata,Eres Mía,Romeo Santos,Bachata beginner guide,https://dynamicbachata.com/blog/best-bachata-songs-beginners/,candidate,Strong genre reference
+Bachata,Stand by Me,Prince Royce,Bachata beginner guide,https://dynamicbachata.com/blog/best-bachata-songs-beginners/,candidate,Bachata arrangement; do not confuse with Ben E. King original
+Bachata,Obsesión,Aventura,Bachata beginner guide,https://dynamicbachata.com/blog/best-bachata-songs-beginners/,candidate,Strong genre reference
+Salsa,Vivir Mi Vida,Marc Anthony,Salsa essentials guide,https://danceseekers.com/blog/music-to-know-salsa-bachata-kizomba,candidate,Strong genre reference
+Salsa,Valió la Pena,Marc Anthony,Salsa essentials guide,https://danceseekers.com/blog/music-to-know-salsa-bachata-kizomba,candidate,Salsa romántica
+Salsa,El Cantante,Héctor Lavoe,Salsa essentials guide,https://danceseekers.com/blog/music-to-know-salsa-bachata-kizomba,candidate,Classic salsa dura
+Salsa,La Vida Es Un Carnaval,Celia Cruz,Salsa essentials guide,https://danceseekers.com/blog/music-to-know-salsa-bachata-kizomba,candidate,Classic salsa
+Salsa,Quimbara,Celia Cruz & Johnny Pacheco,Salsa timing guide,https://www.justdancesalsa.co.uk/music,candidate,Classic salsa; verify recording
