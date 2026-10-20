@@ -57,5 +57,5 @@ From `server/`, run `python test_analysis.py /path/to/test-audio.mp4`. This chec
 
 - A few seconds of music may not contain enough information to decide meter reliably; the API reports `Unklar` instead of claiming certainty.
 - Half/double-time ambiguity is common in pop and dance music. The API returns alternatives and confidence.
-- The app recommends Rumba, Discofox, Cha-Cha-Cha, Jive, Quickstep, and the two waltzes from tempo and likely meter. Bachata is included as a possible alternative from 108 to 152 BPM. These are tempo-based recommendations, not reliable genre recognition; Bachata, Cha-Cha-Cha, and Discofox overlap substantially.
+- The app recommends Rumba, Discofox, Cha-Cha-Cha, Jive, Quickstep, and the two waltzes from tempo and likely meter. Bachata and Salsa are included as conditional alternatives in overlapping tempo ranges, with listening cues for their characteristic rhythms. These are still tempo-based recommendations, not reliable genre recognition; Bachata, Salsa, Cha-Cha-Cha, and Discofox overlap substantially.
 - There is no user account, rate limiting, abuse monitoring, or production SLA in this low-cost prototype.
